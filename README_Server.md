@@ -37,6 +37,7 @@ Redis (Docker)
   - 停止：`docker-compose down`
   - 重建：`docker-compose up -d --build`
   - 重启单服务：`docker-compose restart <service>`
+  - 云上配置文件在private.zip 密码是出生日期YYYYMMDD
 
 ## 2. 运行中的容器
 
