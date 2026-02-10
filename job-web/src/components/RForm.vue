@@ -72,6 +72,7 @@
                     </el-col>
                 </el-row>
             </template>
+            <slot name="extra"></slot>
             <el-row>
                 <el-form-item>
                     <el-button size="small" icon="el-icon-refresh-right" @click="resetField" type="primary">重置
