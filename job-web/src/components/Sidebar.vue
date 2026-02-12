@@ -1,5 +1,5 @@
 <template>
-    <el-aside width="200px">
+    <el-aside width="250px">
         <div class="logo">
            <!-- <img src="../assets/images/logo.png">-->
             <div style="margin-left: -55px"> 轻松投大学生校园招聘</div>
