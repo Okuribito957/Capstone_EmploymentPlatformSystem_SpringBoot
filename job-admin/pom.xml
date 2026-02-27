@@ -84,6 +84,25 @@
             <artifactId>lombok</artifactId>
             <version>1.18.24</version>
         </dependency>
+        <!-- 阿里云SDK -->
+        <dependency>
+            <groupId>com.aliyun</groupId>
+            <artifactId>dypnsapi20170525</artifactId>
+            <version>2.0.0</version>
+        </dependency>
+        <!-- 阿里云凭证SDK -->
+        <dependency>
+            <groupId>com.aliyun</groupId>
+            <artifactId>credentials-java</artifactId>
+            <version>1.0.3</version>
+        </dependency>
+        <!-- 阿里云SDK依赖 -->
+        <!-- 若单独使用credentials-java时，需额外引入tea包 -->
+        <dependency>
+            <groupId>com.aliyun</groupId>
+            <artifactId>tea</artifactId>
+            <version>[1.2.0, 2.0.0)</version>
+        </dependency>
     </dependencies>
 
     <build>
