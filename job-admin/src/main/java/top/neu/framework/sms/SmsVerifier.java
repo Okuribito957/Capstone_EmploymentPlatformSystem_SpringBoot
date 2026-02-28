@@ -48,10 +48,6 @@ public class SmsVerifier {
     @Value("${aliyun.sms.access-key-secret:}")
     private String accessKeySecret;
 
-    /** 在阿里云控制台中创建的验证方案代码（必需） */
-    @Value("${aliyun.sms.scheme-code:}")
-    private String schemeCode;
-
     /** 详细日志输出标志（生产环境建议设为false） */
     @Value("${aliyun.sms.log-details:false}")
     private boolean logDetails;
@@ -142,10 +138,6 @@ public class SmsVerifier {
             log.error("SmsVerifier.sendCode: 客户端未初始化。请检查配置");
             return SmsResult.fail("SMS_CLIENT_INIT_FAILED", "SMS客户端初始化失败");
         }
-        if (!StringUtils.hasText(schemeCode)) {
-            log.error("SmsVerifier.sendCode: schemeCode未设置");
-            return SmsResult.fail("SCHEME_CODE_MISSING", "aliyun.sms.scheme-code未设置");
-        }
 
         if (logDetails) {
             log.info("SmsVerifier.sendCode: 发送开始 phoneNumber={}", phoneNumber);
@@ -156,7 +148,6 @@ public class SmsVerifier {
                     new com.aliyun.dypnsapi20170525.models.SendSmsVerifyCodeRequest()
                             .setPhoneNumber(phoneNumber);
             // 必填参数
-            // req.setSchemeName(schemeCode);
             req.setSignName(SIGN_NAME); // 签名名称，必须与阿里云控制台中创建的签名名称完全匹配
             req.setTemplateCode(templateCode);
             req.setTemplateParam("{\"code\":\"##code##\",\"min\":\"5\"}");
@@ -194,10 +185,6 @@ public class SmsVerifier {
         if (client == null) {
             log.error("SmsVerifier.checkCode: 客户端未初始化");
             return SmsResult.fail("SMS_CLIENT_INIT_FAILED", "SMS客户端初始化失败");
-        }
-        if (!StringUtils.hasText(schemeCode)) {
-            log.error("SmsVerifier.checkCode: schemeCode未设置");
-            return SmsResult.fail("SCHEME_CODE_MISSING", "aliyun.sms.scheme-code未设置");
         }
 
         if (logDetails) {

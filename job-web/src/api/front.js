@@ -55,3 +55,11 @@ export function company_create(data) {
         data:data
     });
 }
+
+export function sms_send(data) {
+    return request({ url: 'f/sms/send_code', method: 'post', data: data });
+}
+
+export function sms_check(data) {
+    return request({ url: 'f/sms/check_code', method: 'post', data: data });
+}

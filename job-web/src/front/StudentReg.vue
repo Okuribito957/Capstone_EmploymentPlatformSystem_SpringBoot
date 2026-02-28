@@ -2,6 +2,20 @@
     <div style="width: 500px;margin: auto">
         <r-form ref="myForm" :rules="rules" :form="form" :items="items" :save="save">
             <template v-slot:extra>
+                <el-form-item label="手机号码" prop="phone">
+                    <div style="display:flex;gap:8px;">
+                        <el-input v-model="form.phone" placeholder="手机号码"
+                                  :disabled="!turnstileToken" style="flex:1;" />
+                        <el-button :disabled="!turnstileToken || smsCountdown > 0"
+                                   @click="sendSmsCode">
+                            {{ smsCountdown > 0 ? smsCountdown + 's 后重试' : '发送验证码' }}
+                        </el-button>
+                    </div>
+                </el-form-item>
+                <el-form-item label="验证码" prop="smsCode">
+                    <el-input v-model="form.smsCode" placeholder="请输入验证码"
+                              :disabled="!turnstileToken" />
+                </el-form-item>
                 <el-form-item>
                     <div class="turnstile" ref="turnstile"></div>
                     <div v-if="turnstileError" class="turnstile-error">{{ turnstileError }}</div>
@@ -13,14 +27,14 @@
 
 <script>
     import RForm from "../components/RForm";
-    import {student_create} from "@/api/front";
+    import {student_create, sms_send, sms_check} from "@/api/front";
     import {message} from "@/utils/message";
 
     export default {
         name: "StudentReg",
         components: {RForm},
         data() {
-            let validatePwd = (rule, value, callback) => {
+            let validatePwd = (_rule, value, callback) => {
                 if (value === '') {
                     callback(new Error('请再次输入密码'));
                 } else if (value !== this.form.password) {
@@ -38,10 +52,13 @@
                     birthday: '',
                     college: '',
                     phone: '',
+                    smsCode: '',
                 },
                 turnstileWidgetId: null,
                 turnstileToken: null,
                 turnstileError: '',
+                smsCountdown: 0,
+                smsTimer: null,
                 rules: {
                     name: [{required: true, message: '必填项不能为空'}],
                     account: [{required: true, message: '必填项不能为空'}],
@@ -51,13 +68,13 @@
                         {required: true, validator: validatePwd}
                     ],
                     phone: [{required: true, message: '必填项不能为空'}],
+                    smsCode: [{required: true, message: '验证码不能为空'}],
                 },
                 items: [
                     {type: 'text', label: '姓名', prop: 'name', name: 'name', placeholder: '请输入姓名'},
                     {type: 'text', label: '账号', prop: 'account', name: 'account', placeholder: '账号'},
                     {type: 'password', label: '密码', prop: 'password', name: 'password', placeholder: '密码'},
                     {type: 'password', label: '确认密码', prop: 'password2', name: 'password2', placeholder: '确认密码'},
-                    {type: 'text', label: '手机号码', prop: 'phone', name: 'phone', placeholder: '手机号码'},
                     {type: 'date', label: '出生日期', prop: 'birthday', name: 'birthday', placeholder: '出生日期'},
                     {type: 'text', label: '毕业学校', prop: 'college', name: 'college', placeholder: '毕业学校'},
                 ]
@@ -68,6 +85,7 @@
         },
         beforeDestroy() {
             this.removeTurnstile();
+            if (this.smsTimer) clearInterval(this.smsTimer);
         },
         methods: {
             getTurnstileSiteKey() {
@@ -146,6 +164,22 @@
                 this.turnstileWidgetId = null;
                 this.turnstileToken = null;
             },
+            sendSmsCode() {
+                sms_send({phoneNumber: this.form.phone, templateCode: '100001'})
+                    .then(() => {
+                        message.success('验证码已发送');
+                        this.startSmsCountdown();
+                    }).catch(() => {});
+            },
+            startSmsCountdown() {
+                this.smsCountdown = 60;
+                this.smsTimer = setInterval(() => {
+                    if (--this.smsCountdown <= 0) {
+                        clearInterval(this.smsTimer);
+                        this.smsTimer = null;
+                    }
+                }, 1000);
+            },
             save() {
                 let flag = this.$refs['myForm'].validateForm();
                 if (flag) {
@@ -153,15 +187,20 @@
                         message.warning('请先完成人机验证');
                         return;
                     }
-                    let param = {
-                        ...this.form,
-                        turnstileToken: this.turnstileToken
-                    };
-                    student_create(param).then(res => {
-                        this.$message.success(res.msg);
-                    }).catch(() => {
-                        this.resetTurnstile();
-                    });
+                    sms_check({phoneNumber: this.form.phone, code: this.form.smsCode})
+                        .then(() => {
+                            let param = {
+                                ...this.form,
+                                turnstileToken: this.turnstileToken
+                            };
+                            delete param.smsCode;
+                            student_create(param).then(res => {
+                                this.$message.success(res.msg);
+                                setTimeout(() => { this.$router.push('/'); }, 1500);
+                            }).catch(() => {
+                                this.resetTurnstile();
+                            });
+                        }).catch(() => {});
                 }
             }
         }
