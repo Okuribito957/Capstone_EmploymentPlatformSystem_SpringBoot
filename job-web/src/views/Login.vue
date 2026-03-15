@@ -30,7 +30,7 @@
                                 </el-option>
                             </el-select>
                         </el-form-item>
-                        <el-form-item>
+                        <el-form-item v-if="turnstileEnabled">
                             <div class="turnstile" ref="turnstile"></div>
                             <div v-if="turnstileError" class="turnstile-error">{{ turnstileError }}</div>
                         </el-form-item>
@@ -60,6 +60,7 @@
                     type: 0,
                 },
                 loggingIn: false,
+                turnstileEnabled: process.env.VUE_APP_TURNSTILE_ENABLED !== 'false',
                 turnstileWidgetId: null,
                 turnstileToken: null,
                 turnstileError: '',
@@ -71,7 +72,9 @@
             }
         },
         mounted() {
-            this.initTurnstile();
+            if (this.turnstileEnabled) {
+                this.initTurnstile();
+            }
         },
         beforeDestroy() {
             this.removeTurnstile();
@@ -157,7 +160,7 @@
             login() {
                 this.$refs['loginForm'].validate(valid => {
                     if (valid) {
-                        if (!this.turnstileToken) {
+                        if (this.turnstileEnabled && !this.turnstileToken) {
                             message.warning('请先完成人机验证');
                             return;
                         }

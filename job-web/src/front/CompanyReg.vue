@@ -5,8 +5,8 @@
                 <el-form-item label="联系电话" prop="telephone">
                     <div style="display:flex;gap:8px;">
                         <el-input v-model="form.telephone" placeholder="联系电话"
-                                  :disabled="!turnstileToken" style="flex:1;" />
-                        <el-button :disabled="!turnstileToken || smsCountdown > 0"
+                                  :disabled="turnstileEnabled && !turnstileToken" style="flex:1;" />
+                        <el-button :disabled="(turnstileEnabled && !turnstileToken) || smsCountdown > 0"
                                    @click="sendSmsCode">
                             {{ smsCountdown > 0 ? smsCountdown + 's 后重试' : '发送验证码' }}
                         </el-button>
@@ -14,9 +14,9 @@
                 </el-form-item>
                 <el-form-item label="验证码" prop="smsCode">
                     <el-input v-model="form.smsCode" placeholder="请输入验证码"
-                              :disabled="!turnstileToken" />
+                              :disabled="turnstileEnabled && !turnstileToken" />
                 </el-form-item>
-                <el-form-item>
+                <el-form-item v-if="turnstileEnabled">
                     <div class="turnstile" ref="turnstile"></div>
                     <div v-if="turnstileError" class="turnstile-error">{{ turnstileError }}</div>
                 </el-form-item>
@@ -53,6 +53,7 @@
                     telephone: '',
                     smsCode: '',
                 },
+                turnstileEnabled: process.env.VUE_APP_TURNSTILE_ENABLED !== 'false',
                 turnstileWidgetId: null,
                 turnstileToken: null,
                 turnstileError: '',
@@ -79,7 +80,9 @@
             }
         },
         mounted() {
-            this.initTurnstile();
+            if (this.turnstileEnabled) {
+                this.initTurnstile();
+            }
         },
         beforeDestroy() {
             this.removeTurnstile();
@@ -181,7 +184,7 @@
             save() {
                 let flag = this.$refs['myForm'].validateForm();
                 if (flag) {
-                    if (!this.turnstileToken) {
+                    if (this.turnstileEnabled && !this.turnstileToken) {
                         message.warning('请先完成人机验证');
                         return;
                     }
